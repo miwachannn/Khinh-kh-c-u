@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Gem Bay Né Khí Cầu</title>
+<style>
+  body {
+    text-align: center;
+    background: #e8f4ff;
+    font-family: Arial;
+  }
+  canvas {
+    background: linear-gradient(#b3e5ff, #ffffff);
+    display: block;
+    margin: auto;
+    border: 3px solid #3399ff;
+  }
+  #controls {
+    margin-top: 10px;
+  }
+  #controls button {
+    font-size: 26px;
+    padding: 15px;
+    margin: 5px;
+  }
+</style>
+</head>
+<body>
+
+<h2>🎈 Gem Bay</h2>
+<p>🏆 Điểm: <span id="score">0</span></p>
+
+<!-- NÚT CẢM ỨNG -->
+<div id="controls">
+  <button ontouchstart="move='up'" ontouchend="move=''">⬆️</button><br>
+  <button ontouchstart="move='left'" ontouchend="move=''">⬅️</button>
+  <button ontouchstart="move='down'" ontouchend="move=''">⬇️</button>
+  <button ontouchstart="move='right'" ontouchend="move=''">➡️</button>
+</div>
+
+<canvas id="game" width="420" height="540"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const scoreText = document.getElementById("score");
+
+let move = "";
+
+// PLAYER
+let player = { x:190, y:420, w:36, h:46, speed:5 };
+let obstacles = [];
+let fruits = [];
+let score = 0;
+let speed = 3;
+let over = false;
+let keys = {};
+
+// KEYBOARD
+document.addEventListener("keydown", e => keys[e.key]=true);
+document.addEventListener("keyup", e => keys[e.key]=false);
+
+// PLAYER DRAW
+function drawPlayer(){
+  ctx.fillStyle="#ff6699";
+  ctx.beginPath();
+  ctx.ellipse(player.x+18, player.y+23, 18, 23, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle="#777";
+  ctx.fillRect(player.x+14, player.y+45, 8, 10);
+}
+
+// OBSTACLES
+function spawnObstacle(){
+  obstacles.push({
+    x: Math.random()*(canvas.width-40),
+    y: -60,
+    w: 40,
+    h: 50,
+    s: speed + Math.random()*2
+  });
+}
+
+function drawObstacles(){
+  obstacles.forEach(o=>{
+    ctx.fillStyle="#111";
+    ctx.beginPath();
+    ctx.ellipse(o.x+20, o.y+25, 20, 25, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillRect(o.x+15, o.y+45, 10, 10);
+    o.y += o.s;
+
+    if (
+      player.x < o.x+o.w &&
+      player.x+player.w > o.x &&
+      player.y < o.y+o.h &&
+      player.y+player.h > o.y
+    ) endGame();
+  });
+  obstacles = obstacles.filter(o=>o.y < canvas.height+60);
+}
+
+// FRUIT
+function spawnFruit(){
+  fruits.push({
+    x: Math.random()*(canvas.width-26),
+    y: -30,
+    s: 2
+  });
+}
+
+function drawFruits(){
+  fruits.forEach(f=>{
+    ctx.fillStyle="#e60026";
+    ctx.beginPath();
+    ctx.arc(f.x+13, f.y+13, 13, 0, Math.PI*2);
+    ctx.fill();
+
+    ctx.fillStyle="#33aa33";
+    ctx.beginPath();
+    ctx.moveTo(f.x+13, f.y-3);
+    ctx.lineTo(f.x+6, f.y+6);
+    ctx.lineTo(f.x+20, f.y+6);
+    ctx.fill();
+
+    f.y += f.s;
+
+    if (
+      player.x < f.x+26 &&
+      player.x+player.w > f.x &&
+      player.y < f.y+26 &&
+      player.y+player.h > f.y
+    ) {
+      score += 5;
+      scoreText.textContent = score;
+      f.hit = true;
+    }
+  });
+  fruits = fruits.filter(f=>!f.hit && f.y < canvas.height);
+}
+
+// UPDATE
+function update(){
+  if(over) return;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // PC
+  if(keys["ArrowLeft"] && player.x>0) player.x-=player.speed;
+  if(keys["ArrowRight"] && player.x<canvas.width-player.w) player.x+=player.speed;
+  if(keys["ArrowUp"] && player.y>0) player.y-=player.speed;
+  if(keys["ArrowDown"] && player.y<canvas.height-player.h) player.y+=player.speed;
+
+  // MOBILE
+  if(move==="left" && player.x>0) player.x-=player.speed;
+  if(move==="right" && player.x<canvas.width-player.w) player.x+=player.speed;
+  if(move==="up" && player.y>0) player.y-=player.speed;
+  if(move==="down" && player.y<canvas.height-player.h) player.y+=player.speed;
+
+  drawPlayer();
+  drawObstacles();
+  drawFruits();
+  requestAnimationFrame(update);
+}
+
+function endGame(){
+  over = true;
+  alert("💥 Game Over! Điểm: " + score);
+  location.reload();
+}
+
+// SPAWN
+setInterval(()=>{ spawnObstacle(); if(speed<9) speed+=0.2; }, 900);
+setInterval(spawnFruit, 1500);
+
+update();
+</script>
+
+</body>
+</html>
